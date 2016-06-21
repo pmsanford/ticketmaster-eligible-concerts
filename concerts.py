@@ -11,15 +11,18 @@ def group_by(lst, group_by):
 		nf[item] = [x for x in lst if x[group_by] == item]
 	return nf
 
+def retr_concerts(url):
+	r = requests.get(concerts_url)
+	with open('concerts.json', 'w') as f:
+		concerts = r.json()['response']['docs']
+		json.dump(concerts, f)
+		return concerts
 
 try:
 	with open('concerts.json', 'r') as f:
 		concerts = json.load(f)
 except FileNotFoundError:
-	r = requests.get(concerts_url)
-	with open('concerts.json', 'w') as f:
-		concerts = r.json()['response']['docs']
-		json.dump(concerts, f)
+	concerts = retr_concerts(concerts_url)
 
 cities = sorted(set([x['VenueCity'] for x in concerts]))
 states = sorted(set([x['VenueState'] for x in concerts]))
@@ -33,8 +36,12 @@ parser.add_argument('-s', '--state', action='append', dest='state', help='filter
 parser.add_argument('-g', '--group_by', choices=group_bys)
 parser.add_argument('-x', '--sort_by', choices=sort_bys, default='date')
 parser.add_argument('-j', '--json', action='store_const', const=True, help='print full json output')
+parser.add_argument('-r', '--refresh', action='store_const', const=True, help='re-download list of concerts')
 
 args = parser.parse_args()
+
+if args.refresh == True:
+	concerts = retr_concerts(concerts_url)
 
 filtered = concerts
 
